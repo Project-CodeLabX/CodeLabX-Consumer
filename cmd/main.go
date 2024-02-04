@@ -27,17 +27,20 @@ func main() {
 	go func() {
 		defer consumer.RmqChannel.Close()
 		defer consumer.RmqConn.Close()
-		for {
-			msg := <-messageBus
-			var userEvent rmq.UserEvent
-			err := json.Unmarshal(msg.Body, &userEvent)
-			if err != nil {
-				log.Println("error during json unmarshal in messagebus: ", err)
+		for msg := range messageBus {
+			if msg.Body != nil {
+				var userEvent rmq.UserEvent
+				err := json.Unmarshal(msg.Body, &userEvent)
+				if err != nil {
+					log.Println("error happened in json unmarshal in msg: ", err)
+					continue
+				}
+				log.Println("Consumed user event: ", userEvent)
+				msg.Ack(false)
+				log.Println("acknowledged the message...")
 			}
-			log.Println("message : ", userEvent)
-			msg.Acknowledger.Ack(1, false)
 		}
 	}()
 
-	http.ListenAndServe(":9000", r)
+	http.ListenAndServe(":9010", r)
 }
