@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"github.com/gorilla/mux"
 )
@@ -38,6 +39,7 @@ func main() {
 				}
 				log.Println("Consumed user event: ", userEvent)
 				writeToFile(&userEvent)
+				runFile(userEvent.Language)
 				msg.Ack(false)
 				log.Println("acknowledged the message...")
 			}
@@ -52,10 +54,11 @@ func init() {
 }
 
 func createFiles() {
-	_, err := os.Create("res/codelabx.py")
+	p, err := os.Create("res/codelabx.py")
 	if err != nil {
 		log.Println("error in py file creation: ", err)
 	}
+	p.Close()
 	_, err1 := os.Create("res/codelabx.java")
 	if err != nil {
 		log.Println("error in java file creation: ", err1)
@@ -76,11 +79,30 @@ func writeToFile(userEvent *rmq.UserEvent) {
 		path = "res/codelabx.cpp"
 	}
 
-	file, err := os.OpenFile(path, os.O_WRONLY, 0666)
+	file, err := os.OpenFile(path, os.O_WRONLY, 0333)
 	if err != nil {
 		log.Println("err in file Writting: ", err)
 	}
 	defer file.Close()
-
+	file.Truncate(0)
 	file.WriteString(userEvent.Code)
+}
+
+func runFile(lang string) {
+	if lang == "python" {
+		runPythonFile()
+	} else if lang == "java" {
+
+	} else {
+
+	}
+}
+
+func runPythonFile() {
+	out, err := exec.Command("python", "res/codelabx.py").CombinedOutput()
+
+	if err != nil {
+		log.Println("err in runPython: ", err)
+	}
+	log.Println("output: ", string(out))
 }
