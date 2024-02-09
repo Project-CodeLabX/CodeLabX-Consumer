@@ -92,7 +92,7 @@ func runFile(lang string) {
 	if lang == "python" {
 		runPythonFile()
 	} else if lang == "java" {
-
+		runJavaFile()
 	} else {
 
 	}
@@ -105,4 +105,19 @@ func runPythonFile() {
 		log.Println("err in runPython: ", err)
 	}
 	log.Println("output: ", string(out))
+}
+
+func runJavaFile() {
+	out1, err := exec.Command("javac", "res/codelabx.java").CombinedOutput()
+	if err != nil {
+		log.Println("err in runJavac: ", err)
+
+	}
+	log.Println("javac output: ", string(out1))
+	out, err := exec.Command("java", "res/codelabx").CombinedOutput()
+	if err != nil {
+		log.Println("err in runJava: ", err)
+
+	}
+	log.Println("java output: ", string(out))
 }
