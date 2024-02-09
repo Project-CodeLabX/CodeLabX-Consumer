@@ -12,9 +12,6 @@ import (
 
 var (
 	consumer *rmq.RmqConsumer
-	py       *os.File
-	java     *os.File
-	cpp      *os.File
 )
 
 func main() {
@@ -40,6 +37,7 @@ func main() {
 					continue
 				}
 				log.Println("Consumed user event: ", userEvent)
+				writeToFile(&userEvent)
 				msg.Ack(false)
 				log.Println("acknowledged the message...")
 			}
@@ -51,35 +49,38 @@ func main() {
 
 func init() {
 	createFiles()
-	py.Close()
-	java.Close()
-	cpp.Close()
-	writeToFiles()
 }
 
 func createFiles() {
-	p, err := os.Create("res/codelabx.py")
+	_, err := os.Create("res/codelabx.py")
 	if err != nil {
 		log.Println("error in py file creation: ", err)
 	}
-	j, err := os.Create("res/codelabx.java")
+	_, err1 := os.Create("res/codelabx.java")
 	if err != nil {
-		log.Println("error in java file creation: ", err)
+		log.Println("error in java file creation: ", err1)
 	}
-	c, err := os.Create("res/codelabx.cpp")
+	_, err2 := os.Create("res/codelabx.cpp")
 	if err != nil {
-		log.Println("error in cpp file creation: ", err)
+		log.Println("error in cpp file creation: ", err2)
 	}
-
-	py = p
-	java = j
-	cpp = c
 }
 
-func writeToFiles() {
-	py, _ := os.OpenFile("res/codelabx.py", os.O_WRONLY, 0666)
-	ans, err := py.WriteString("print(\"Hello from CodeLab\")")
+func writeToFile(userEvent *rmq.UserEvent) {
+	var path string
+	if userEvent.Language == "python" {
+		path = "res/codelabx.py"
+	} else if userEvent.Language == "java" {
+		path = "res/codelabx.java"
+	} else {
+		path = "res/codelabx.cpp"
+	}
 
-	log.Println("ans: ", ans)
-	log.Println("err: ", err)
+	file, err := os.OpenFile(path, os.O_WRONLY, 0666)
+	if err != nil {
+		log.Println("err in file Writting: ", err)
+	}
+	defer file.Close()
+
+	file.WriteString(userEvent.Code)
 }
