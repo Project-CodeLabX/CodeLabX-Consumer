@@ -1,7 +1,9 @@
 package main
 
 import (
+	"codelabx-consumer/redis"
 	"codelabx-consumer/rmq"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -12,7 +14,8 @@ import (
 )
 
 var (
-	consumer *rmq.RmqConsumer
+	consumer    *rmq.RmqConsumer
+	redisClient *redis.RedisClient
 )
 
 func main() {
@@ -51,6 +54,8 @@ func main() {
 
 func init() {
 	createFiles()
+	redisClient = redis.GetRedisClient()
+	writeToRedis("hi")
 }
 
 func createFiles() {
@@ -120,4 +125,12 @@ func runJavaFile() {
 
 	}
 	log.Println("java output: ", string(out))
+}
+
+func writeToRedis(payload string) {
+	ctx := context.Background()
+	err := redisClient.Rdb.Set(ctx, "test", "Hello from codelabx", 0).Err()
+	if err != nil {
+		log.Println("error in inserting into redis: ", err)
+	}
 }
