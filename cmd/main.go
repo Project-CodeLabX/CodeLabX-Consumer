@@ -42,7 +42,7 @@ func main() {
 				}
 				log.Println("Consumed user event: ", userEvent)
 				writeToFile(&userEvent)
-				runFile(userEvent.Language)
+				runFile(&userEvent)
 				msg.Ack(false)
 				log.Println("acknowledged the message...")
 			}
@@ -55,7 +55,6 @@ func main() {
 func init() {
 	createFiles()
 	redisClient = redis.GetRedisClient()
-	writeToRedis("hi")
 }
 
 func createFiles() {
@@ -93,26 +92,28 @@ func writeToFile(userEvent *rmq.UserEvent) {
 	file.WriteString(userEvent.Code)
 }
 
-func runFile(lang string) {
+func runFile(userEvent *rmq.UserEvent) {
+	lang := userEvent.Language
 	if lang == "python" {
-		runPythonFile()
+		runPythonFile(userEvent)
 	} else if lang == "java" {
-		runJavaFile()
+		runJavaFile(userEvent)
 	} else {
 
 	}
 }
 
-func runPythonFile() {
+func runPythonFile(userEvent *rmq.UserEvent) {
 	out, err := exec.Command("python", "res/codelabx.py").CombinedOutput()
 
 	if err != nil {
 		log.Println("err in runPython: ", err)
 	}
 	log.Println("output: ", string(out))
+	writeToRedis(userEvent.UserName, string(out))
 }
 
-func runJavaFile() {
+func runJavaFile(userEvent *rmq.UserEvent) {
 	out1, err := exec.Command("javac", "res/codelabx.java").CombinedOutput()
 	if err != nil {
 		log.Println("err in runJavac: ", err)
@@ -125,11 +126,12 @@ func runJavaFile() {
 
 	}
 	log.Println("java output: ", string(out))
+	writeToRedis(userEvent.UserName, string(out1)+"\n"+string(out))
 }
 
-func writeToRedis(payload string) {
+func writeToRedis(username string, stdout string) {
 	ctx := context.Background()
-	err := redisClient.Rdb.Set(ctx, "test", "Hello from codelabx", 0).Err()
+	err := redisClient.Rdb.Set(ctx, username, stdout, 0).Err()
 	if err != nil {
 		log.Println("error in inserting into redis: ", err)
 	}
