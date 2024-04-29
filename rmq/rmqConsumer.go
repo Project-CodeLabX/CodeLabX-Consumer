@@ -8,8 +8,8 @@ import (
 
 const (
 	url          string = "amqp://Abhi1060:Abhi1060@localhost:5672/codelabx"
-	queue        string = "user_events"
-	consumerName        = "consumer_1"
+	queue        string = "py_events"
+	consumerName        = "py_consumer"
 )
 
 type RmqConsumer struct {
