@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	url          string = "amqp://Abhi1060:Abhi1060@localhost:5672/codelabx"
+	url          string = "amqps://abhi:Deadshot1060@b-195dfc46-2db6-4582-b92b-ff6bc1a3b4fd.mq.ap-south-1.amazonaws.com:5671/codelabx"
 	queue        string = "py_events"
 	consumerName        = "py_consumer"
 )

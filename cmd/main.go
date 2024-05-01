@@ -58,6 +58,11 @@ func init() {
 }
 
 func createFiles() {
+	err := os.Mkdir("res", os.ModePerm)
+	if err != nil {
+		log.Println("Failed to create res dir with : ", err)
+		return
+	}
 	p, err := os.Create("res/codelabx.py")
 	if err != nil {
 		log.Println("error in py file creation: ", err)
