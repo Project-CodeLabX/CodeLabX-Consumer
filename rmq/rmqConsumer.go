@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	url          string = "amqp://Abhi1060:Abhi1060@localhost:5672/codelabx"
-	queue        string = "user_events"
+	url          string = "amqps://abhi:Deadshot1060@b-195dfc46-2db6-4582-b92b-ff6bc1a3b4fd.mq.ap-south-1.amazonaws.com:5671/codelabx"
+	queue        string = "java_events"
 	consumerName        = "consumer_1"
 )
 

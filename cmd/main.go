@@ -41,8 +41,11 @@ func main() {
 					continue
 				}
 				log.Println("Consumed user event: ", userEvent)
-				writeToFile(&userEvent)
-				runFile(&userEvent)
+				createResFolder()
+				createFiles(userEvent.FileName)
+				writeToFile(userEvent.FileName, &userEvent)
+				runFile(userEvent.FileName, &userEvent)
+				deleteFiles()
 				msg.Ack(false)
 				log.Println("acknowledged the message...")
 			}
@@ -53,35 +56,38 @@ func main() {
 }
 
 func init() {
-	createFiles()
+	// createResFolder()
 	redisClient = redis.GetRedisClient()
 }
 
-func createFiles() {
-	p, err := os.Create("res/codelabx.py")
+func createResFolder() {
+	err := os.MkdirAll("res", os.ModeDir)
 	if err != nil {
-		log.Println("error in py file creation: ", err)
-	}
-	p.Close()
-	_, err1 := os.Create("res/codelabx.java")
-	if err != nil {
-		log.Println("error in java file creation: ", err1)
-	}
-	_, err2 := os.Create("res/codelabx.cpp")
-	if err != nil {
-		log.Println("error in cpp file creation: ", err2)
+		log.Println("error in res folder creation : ", err)
 	}
 }
 
-func writeToFile(userEvent *rmq.UserEvent) {
-	var path string
-	if userEvent.Language == "python" {
-		path = "res/codelabx.py"
-	} else if userEvent.Language == "java" {
-		path = "res/codelabx.java"
-	} else {
-		path = "res/codelabx.cpp"
+func deleteFiles() {
+	err := os.RemoveAll("res")
+	if err != nil {
+		log.Println("error in res folder deletion : ", err)
 	}
+}
+
+func createFiles(fileName string) {
+	path := "res/" + fileName + ".java"
+	log.Println("path to crate file : ", path)
+	p, err := os.Create(path)
+	if err != nil {
+		log.Println("error in java file creation: ", err)
+	}
+	p.Close()
+
+}
+
+func writeToFile(fileName string, userEvent *rmq.UserEvent) {
+	path := "res/" + fileName + ".java"
+	// var path string = "res/codelabx.java"
 
 	file, err := os.OpenFile(path, os.O_WRONLY, 0333)
 	if err != nil {
@@ -89,41 +95,23 @@ func writeToFile(userEvent *rmq.UserEvent) {
 	}
 	defer file.Close()
 	file.Truncate(0)
-	file.WriteString(userEvent.Code)
+	file.WriteString("package res;\n\n" + userEvent.Code)
 }
 
-func runFile(userEvent *rmq.UserEvent) {
-	lang := userEvent.Language
-	if lang == "python" {
-		runPythonFile(userEvent)
-	} else if lang == "java" {
-		runJavaFile(userEvent)
-	} else {
-
-	}
+func runFile(filename string, userEvent *rmq.UserEvent) {
+	runJavaFile(filename, userEvent)
 }
 
-func runPythonFile(userEvent *rmq.UserEvent) {
-	out, err := exec.Command("python", "res/codelabx.py").CombinedOutput()
-
-	if err != nil {
-		log.Println("err in runPython: ", err)
-	}
-	log.Println("output: ", string(out))
-	writeToRedis(userEvent.UserName, string(out))
-}
-
-func runJavaFile(userEvent *rmq.UserEvent) {
-	out1, err := exec.Command("javac", "res/codelabx.java").CombinedOutput()
+func runJavaFile(fileName string, userEvent *rmq.UserEvent) {
+	path := "res/" + fileName + ".java"
+	out1, err := exec.Command("javac", path).CombinedOutput()
 	if err != nil {
 		log.Println("err in runJavac: ", err)
-
 	}
 	log.Println("javac output: ", string(out1))
-	out, err := exec.Command("java", "res/codelabx").CombinedOutput()
+	out, err := exec.Command("java", "res/"+fileName).CombinedOutput()
 	if err != nil {
 		log.Println("err in runJava: ", err)
-
 	}
 	log.Println("java output: ", string(out))
 	writeToRedis(userEvent.UserName, string(out1)+"\n"+string(out))
